@@ -1,12 +1,18 @@
 import { Router } from 'express'
-import { registerUser, sendOtp, loginUser } from '../controllers/user.controller.js'
+import { registerUser, sendOtp, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword, getCurrentUser, updateUserDetails } from '../controllers/user.controller.js'
+import { verifyJWT } from '../middlewares/auth.middleware.js'
+
 
 const router = Router()
 
 router.route("/register").post(registerUser)
 router.route('/sendotp').post(sendOtp)
 router.route("/login").post(loginUser)
-
+router.route("/logout").post(verifyJWT, logoutUser)
+router.route("/refresh-token").post(refreshAccessToken)
+router.route("/change-password").post(verifyJWT, changeCurrentPassword)
+router.route("/current-user").get(verifyJWT, getCurrentUser)
+router.route("/update-user").post(verifyJWT, updateUserDetails)
 
 
 export default router

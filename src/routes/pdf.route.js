@@ -1,11 +1,13 @@
 import { Router } from 'express'
-import { createPdf, updatePdf, deletePdf, getPdfById, getAllPdf } from '../controllers/pdf.controller.js'
+import { createPdf, updatePdf, deletePdf, getPdfById, getAllPdf, getUserAllPdf } from '../controllers/pdf.controller.js'
 import { upload } from '../middlewares/multer.middleware.js'
+import { verifyJWT } from '../middlewares/auth.middleware.js'
+
 
 const router = Router()
+router.use(verifyJWT)
 
-
-
+router.route("/pdfs").get(getUserAllPdf)
 router.route("/").get(getAllPdf)
 
 router.route("/create").post(
@@ -27,7 +29,7 @@ router
     .route("/:pdfId")
     .get(getPdfById)
     .patch(upload.single("coverImage"), updatePdf)
-    .delete(deletePdf)
+    .delete(deletePdf);
 
 
 

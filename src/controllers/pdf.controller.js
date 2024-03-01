@@ -5,6 +5,17 @@ import { Pdf } from '../models/pdf.model.js'
 import { uploadOnCloudinary, deleteOnCloudinary, uploadCoverImageOnCloudinary } from '../utils/cloudinary.js'
 import mongoose, { isValidObjectId } from 'mongoose'
 
+const isUserOwner = async (pdfId, req) => {
+    const pdf = await Pdf.findById(pdfId);
+
+    if (pdf?.owner.toString() !== req.user?._id.toString()) {
+        return false;
+    }
+
+    return true;
+
+}
+
 
 const getAllPdf = asyncHandler(async (resq, res) => {
 
@@ -20,13 +31,19 @@ const getAllPdf = asyncHandler(async (resq, res) => {
 })
 
 const createPdf = asyncHandler(async (req, res) => {
-    const { title, description } = req.body
+    const { title, description, subject, semester } = req.body
 
     if (!title) {
         throw new ApiError(400, "title is required")
     }
     if (!description) {
-        throw new ApiError(400, "description is requiered")
+        throw new ApiError(400, "description is required")
+    }
+    if (!subject) {
+        throw new ApiError(400, "Subject is required")
+    }
+    if (!semester) {
+        throw new ApiError(400, "Semester is required")
     }
 
 
@@ -39,7 +56,7 @@ const createPdf = asyncHandler(async (req, res) => {
         throw new ApiError(400, "pdf file is required")
     }
     if (!coverImageLocalPath) {
-        throw new ApiError(400, "pdf file is required")
+        throw new ApiError(400, "coverImage file is required")
     }
 
     const pdfFile = await uploadOnCloudinary(pdfFileLocalPath)
@@ -57,6 +74,9 @@ const createPdf = asyncHandler(async (req, res) => {
     const pdf = await Pdf.create({
         title,
         description,
+        semester,
+        subject,
+        owner: req?.user?._id,
         pdfFile: {
             public_id: pdfFile?.public_id,
             url: pdfFile?.url,
@@ -79,19 +99,28 @@ const createPdf = asyncHandler(async (req, res) => {
 
 const updatePdf = asyncHandler(async (req, res) => {
     const { pdfId } = req.params
-    const { title, description } = req.body
+    const { title, description, semester, subject } = req.body
 
     if (!isValidObjectId(pdfId)) {
         throw new ApiError(404, "In valid pdf Id !")
     }
-    if (!title && !description) {
+    if (!title || !description) {
         throw new ApiError(404, "title and description required !")
+    }
+    if (!semester || !subject) {
+        throw new ApiError(404, "subject and semester required !")
     }
 
     const coverImageLocalPath = req?.file?.path
 
     if (!coverImageLocalPath) {
         throw new ApiError(404, "coverImage is required !")
+    }
+
+    const authorized = await isUserOwner(pdfId, req)
+
+    if (!authorized) {
+        throw new ApiError(300, "Unauthorized Access")
     }
 
     const previousPdf = await Pdf.findOne(
@@ -120,6 +149,8 @@ const updatePdf = asyncHandler(async (req, res) => {
             $set: {
                 title,
                 description,
+                subject,
+                semester,
                 coverImage: {
                     public_id: coverImage?.public_id,
                     url: coverImage?.url
@@ -138,6 +169,11 @@ const deletePdf = asyncHandler(async (req, res) => {
 
     if (!isValidObjectId(pdfId)) {
         throw new ApiError(400, "Invalid pdf Id")
+    }
+
+    const authorized = await isUserOwner(pdfId, req)
+    if (!authorized) {
+        throw new ApiError(404, "unAuthorize user")
     }
 
     const previousPdf = await Pdf.findOne({
@@ -176,8 +212,14 @@ const getPdfById = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid pdf Id")
     }
 
+
+
     const pdf = await Pdf.findById(pdfId)
 
+    const authorized = isUserOwner(pdfId, req)
+    if (!authorized) {
+        throw new ApiError(404, "unAuthorize user")
+    }
     if (!pdf) {
         throw new ApiError(400, "failed to fetch pdf")
     }
@@ -187,4 +229,21 @@ const getPdfById = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, pdf, "pdf fetched successfully"))
 })
 
-export { createPdf, updatePdf, deletePdf, getPdfById, getAllPdf }
+const getUserAllPdf = asyncHandler(async (req, res) => {
+
+    const pdf = await Pdf.find(
+        {
+            owner: req?.user?._id
+        }
+    )
+
+    if (!pdf) {
+        throw new ApiError(404, "failed to find user pdf's")
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, pdf, "All pdf fetched successfully."))
+
+})
+export { createPdf, updatePdf, deletePdf, getPdfById, getAllPdf, getUserAllPdf }
