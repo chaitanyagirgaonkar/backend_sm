@@ -32,12 +32,12 @@ const registerUser = asyncHandler(async (req, res) => {
 
 
     if ([username, password, email, collegeName].some((field) => field?.trim() === "")) {
-        2
+
         throw new ApiError(400, "All fields are required!");
     }
-    if (!emailRegex.test(email)) {
-        throw new ApiError(400, "Invalid email address");
-    }
+    // if (!emailRegex.test(email)) {
+    //     throw new ApiError(400, "Invalid email address");
+    // }
 
     if (!otp) {
         throw new ApiError(404, "otp is required")
@@ -55,7 +55,7 @@ const registerUser = asyncHandler(async (req, res) => {
     // console.log(saveOtp)
 
     if (saveOtp?.otp !== otp) {
-        return res.status(400).json(new ApiResponse(400, {}, "entered otp is in valid"))
+        return res.status(405).json(new ApiResponse(402, {}, "entered otp is in valid"))
     }
 
 
@@ -82,15 +82,22 @@ const sendOtp = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Email is required !")
     }
     if (!emailRegex.test(email)) {
-        throw new ApiError(400, "Invalid email address");
+        throw new ApiError(401, "Invalid email address");
     }
+    const existedRegisteredEmail = await User.findOne({
+        email: email
+    })
+    if (existedRegisteredEmail) {
+        throw new ApiError(409, "User with email exists");
+    }
+
     const existedEmail = await Otp.findOne({
         email: email
     })
 
     await Otp.findByIdAndDelete(existedEmail?._id)
 
-    const sendOtp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+    const sendOtp = Math.floor(1000 + Math.random() * 9000); // 4-digit OTP
 
     const saveOtp = await Otp.create({
         email,
@@ -129,7 +136,7 @@ const loginUser = asyncHandler(async (req, res) => {
         }
     )
     if (!user) {
-        throw new ApiError(400, "user does not exist.")
+        throw new ApiError(401, "user does not exist.")
     }
 
     const isPasswordValid = await user.isPasswordCorrect(password)
