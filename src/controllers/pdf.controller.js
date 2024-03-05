@@ -19,6 +19,7 @@ const isUserOwner = async (pdfId, req) => {
 
 const getAllPdf = asyncHandler(async (resq, res) => {
 
+
     const pdfs = await Pdf.find()
 
     if (!pdfs || pdfs.length === 0) {
