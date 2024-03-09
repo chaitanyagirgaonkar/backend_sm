@@ -4,6 +4,7 @@ import { ApiError } from '../utils/ApiError.js'
 import { Pdf } from '../models/pdf.model.js'
 import { uploadOnCloudinary, deleteOnCloudinary, uploadCoverImageOnCloudinary } from '../utils/cloudinary.js'
 import mongoose, { isValidObjectId } from 'mongoose'
+import { User } from "../models/user.model.js"
 
 const isUserOwner = async (pdfId, req) => {
     const pdf = await Pdf.findById(pdfId);
@@ -71,6 +72,12 @@ const createPdf = asyncHandler(async (req, res) => {
     if (!coverImage) {
         throw new ApiError(404, "failed to upload coverImage on cloudinary")
     }
+    // const owner = await User.findById(req?.user?._id)
+
+    // if (!owner) {
+    //     throw new ApiError(402, "pdf owner not found")
+    // }
+    // console.log(`owner : ${owner.username}`)
 
     const pdf = await Pdf.create({
         title,
@@ -182,23 +189,23 @@ const deletePdf = asyncHandler(async (req, res) => {
     })
 
     if (!previousPdf) {
-        throw new ApiError(404, "previous pdf not found")
+        throw new ApiError(401, "previous pdf not found")
     }
     if (previousPdf) {
         const pdfdelete = await deleteOnCloudinary(previousPdf?.pdfFile?.public_id, "raw")
         const coverImageDelete = await deleteOnCloudinary(previousPdf?.coverImage?.public_id)
         if (!pdfdelete) {
-            throw new ApiError(404, "failed to delete  pdfFile")
+            throw new ApiError(402, "failed to delete  pdfFile")
         }
         // console.log(pdfdelete)
         if (!coverImageDelete) {
-            throw new ApiError(404, "failed to delete coverImage")
+            throw new ApiError(403, "failed to delete coverImage")
         }
     }
 
     const pdf = await Pdf.findByIdAndDelete(pdfId)
     if (!pdf) {
-        throw new ApiError(404, "failed to delete pdf")
+        throw new ApiError(405, "failed to delete pdf")
     }
 
     return res
@@ -234,7 +241,7 @@ const getUserAllPdf = asyncHandler(async (req, res) => {
 
     const pdf = await Pdf.find(
         {
-            owner: req?.user?._id
+            owner: req?.user?.id
         }
     )
 
