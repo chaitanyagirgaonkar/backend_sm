@@ -9,7 +9,7 @@ import { User } from "../models/user.model.js"
 const isUserOwner = async (pdfId, req) => {
     const pdf = await Pdf.findById(pdfId);
 
-    if (pdf?.owner.toString() !== req.user?._id.toString()) {
+    if (pdf?.owner?.toString() !== req.user?._id.toString()) {
         return false;
     }
 
@@ -39,13 +39,13 @@ const createPdf = asyncHandler(async (req, res) => {
         throw new ApiError(400, "title is required")
     }
     if (!description) {
-        throw new ApiError(400, "description is required")
+        throw new ApiError(401, "description is required")
     }
     if (!subject) {
-        throw new ApiError(400, "Subject is required")
+        throw new ApiError(402, "Subject is required")
     }
     if (!semester) {
-        throw new ApiError(400, "Semester is required")
+        throw new ApiError(403, "Semester is required")
     }
 
 
@@ -55,10 +55,10 @@ const createPdf = asyncHandler(async (req, res) => {
 
 
     if (!pdfFileLocalPath) {
-        throw new ApiError(400, "pdf file is required")
+        throw new ApiError(409, "pdf file is required")
     }
     if (!coverImageLocalPath) {
-        throw new ApiError(400, "coverImage file is required")
+        throw new ApiError(405, "coverImage file is required")
     }
 
     const pdfFile = await uploadOnCloudinary(pdfFileLocalPath)
@@ -67,10 +67,10 @@ const createPdf = asyncHandler(async (req, res) => {
 
 
     if (!pdfFile) {
-        throw new ApiError(404, "failed to upload pdf on cloudinary")
+        throw new ApiError(406, "failed to upload pdf on cloudinary")
     }
     if (!coverImage) {
-        throw new ApiError(404, "failed to upload coverImage on cloudinary")
+        throw new ApiError(407, "failed to upload coverImage on cloudinary")
     }
     // const owner = await User.findById(req?.user?._id)
 
@@ -96,7 +96,7 @@ const createPdf = asyncHandler(async (req, res) => {
     })
 
     if (!pdf) {
-        throw new ApiError(404, "failed to create pdf")
+        throw new ApiError(408, "failed to create pdf")
     }
 
     return res
@@ -254,4 +254,5 @@ const getUserAllPdf = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, pdf, "All pdf fetched successfully."))
 
 })
+
 export { createPdf, updatePdf, deletePdf, getPdfById, getAllPdf, getUserAllPdf }
