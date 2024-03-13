@@ -22,6 +22,10 @@ const pdfSchema = new Schema({
         ref: "User",
         required: true
     },
+    uploadBy: {
+        type: String,
+        required: true
+    },
     pdfFile: {
         public_id: {
             type: String,

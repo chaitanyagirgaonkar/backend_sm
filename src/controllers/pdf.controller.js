@@ -72,12 +72,12 @@ const createPdf = asyncHandler(async (req, res) => {
     if (!coverImage) {
         throw new ApiError(407, "failed to upload coverImage on cloudinary")
     }
-    // const owner = await User.findById(req?.user?._id)
+    const uploadBy = await User.findById(req?.user?._id)
 
-    // if (!owner) {
-    //     throw new ApiError(402, "pdf owner not found")
-    // }
-    // console.log(`owner : ${owner.username}`)
+    if (!uploadBy) {
+        throw new ApiError(402, "pdf owner not found")
+    }
+    console.log(`owner : ${uploadBy.username}`)
 
     const pdf = await Pdf.create({
         title,
@@ -85,6 +85,7 @@ const createPdf = asyncHandler(async (req, res) => {
         semester,
         subject,
         owner: req?.user?._id,
+        uploadBy: uploadBy.username,
         pdfFile: {
             public_id: pdfFile?.public_id,
             url: pdfFile?.url,
@@ -121,9 +122,9 @@ const updatePdf = asyncHandler(async (req, res) => {
 
     const coverImageLocalPath = req?.file?.path
 
-    if (!coverImageLocalPath) {
-        throw new ApiError(404, "coverImage is required !")
-    }
+    // if (!coverImageLocalPath) {
+    //     throw new ApiError(404, "coverImage is required !")
+    // }
 
     const authorized = await isUserOwner(pdfId, req)
 
@@ -151,25 +152,44 @@ const updatePdf = asyncHandler(async (req, res) => {
             throw new ApiError(404, "coverImage is not upload on cloudinary")
         }
     }
-
-    const pdf = await Pdf.findByIdAndUpdate(pdfId,
-        {
-            $set: {
-                title,
-                description,
-                subject,
-                semester,
-                coverImage: {
-                    public_id: coverImage?.public_id,
-                    url: coverImage?.url
+    if (!coverImageLocalPath) {
+        const pdf = await Pdf.findByIdAndUpdate(pdfId,
+            {
+                $set: {
+                    title,
+                    description,
+                    subject,
+                    semester
                 }
-            }
-        }, { new: true })
-    if (!pdf) {
-        throw new ApiError(400, "failed to update pdf")
+            }, { new: true })
+
+        if (!pdf) {
+            throw new ApiError(400, "failed to update pdf")
+        }
+        return res.status(200)
+            .json(new ApiResponse(200, pdf, "pdf updated successfully."))
+    } else {
+        const pdf = await Pdf.findByIdAndUpdate(pdfId,
+            {
+                $set: {
+                    title,
+                    description,
+                    subject,
+                    semester,
+                    coverImage: {
+                        public_id: coverImage?.public_id,
+                        url: coverImage?.url
+                    }
+                }
+            }, { new: true })
+        if (!pdf) {
+            throw new ApiError(400, "failed to update pdf")
+        }
+        return res.status(200)
+            .json(new ApiResponse(200, pdf, "pdf updated successfully."))
     }
-    return res.status(200)
-        .json(new ApiResponse(200, pdf, "pdf updated successfully."))
+
+
 })
 
 const deletePdf = asyncHandler(async (req, res) => {
