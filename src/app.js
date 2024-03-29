@@ -19,10 +19,13 @@ app.use(cookieParser())
 import pdfRouter from './routes/pdf.route.js'
 import userRouter from './routes/user.route.js'
 import dashboardRouter from "./routes/dashboard.route.js"
+import projectRouter from "./routes/project.route.js"
+
 // route declaration
 
 app.use("/api/v1/pdfs", pdfRouter)
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
+app.use("/api/v1/project", projectRouter)
 
 export { app }
