@@ -9,7 +9,8 @@ const uploadOnCloudinary = async (localFilePath) => {
         if (!localFilePath) return null
 
         const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "raw"
+            resource_type: "raw",
+            secure: true,
         })
         // file upload successfully
 
@@ -28,7 +29,8 @@ const uploadCoverImageOnCloudinary = async (localFilePath) => {
         if (!localFilePath) return null
 
         const response = await cloudinary.uploader.upload(localFilePath, {
-            resource_type: "image"
+            resource_type: "image",
+            secure: true,
         })
         // file upload successfully
 
@@ -48,6 +50,7 @@ const deleteOnCloudinary = async (public_id, resource_type) => {
     try {
         return await cloudinary.uploader.destroy(public_id, {
             resource_type,
+            secure: true
         })
     } catch (error) {
         console.log(error)
