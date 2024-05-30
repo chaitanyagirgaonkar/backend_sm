@@ -65,7 +65,7 @@ const createPdf = asyncHandler(async (req, res) => {
     const coverImage = await uploadCoverImageOnCloudinary(coverImageLocalPath)
 
 
-
+    // console.log(pdfFile.secure_url);
     if (!pdfFile) {
         throw new ApiError(406, "failed to upload pdf on cloudinary")
     }
@@ -88,7 +88,7 @@ const createPdf = asyncHandler(async (req, res) => {
         uploadBy: uploadBy.username,
         pdfFile: {
             public_id: pdfFile?.public_id,
-            url: pdfFile?.url,
+            url: pdfFile?.secure_url,
         },
         coverImage: {
             public_id: coverImage?.public_id,
